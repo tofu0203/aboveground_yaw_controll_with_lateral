@@ -1,0 +1,2 @@
+# aboveground_yaw_controll_with_lateral
+地上での横向きロータ付きマルチコプタのヨー制御実験用arduinoプログラム
