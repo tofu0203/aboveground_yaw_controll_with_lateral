@@ -32,9 +32,11 @@ int brushless3_command;
 int brushless4_command;
 int lateral_brushless5_command;
 int lateral_brushless6_command;
+int lateral1_servo_command;
 int lateral1_servo1_command;
 int lateral1_servo2_command;
 int lateral1_servo3_command;
+int lateral2_servo_command;
 int lateral2_servo1_command;
 int lateral2_servo2_command;
 int lateral2_servo3_command;
@@ -138,13 +140,28 @@ void yawCallback(const std_msgs::Float32 &command_value)
 	brushless4_command = limit_servo_command_value(standard_throttle);
 	lateral_brushless5_command = limit_servo_command_value(lateral_standard_throttle);
 	lateral_brushless6_command = limit_servo_command_value(lateral_standard_throttle);
+	lateral1_servo_command = lateral1_thrust_to_servo_command(command_value.data);
+	lateral1_servo1_command = 3000 - lateral1_servo_command;
+	lateral1_servo2_command = lateral1_servo_command;
+	lateral1_servo3_command = lateral1_servo_command;
+	lateral2_servo_command = lateral2_thrust_to_servo_command(command_value.data);
+	lateral2_servo1_command = 3000 - lateral2_servo_command;
+	lateral2_servo2_command = lateral2_servo_command;
+	lateral2_servo3_command = lateral2_servo_command;
 
+	// output motor
 	brushlessmotor1.writeMicroseconds(brushless1_command);
 	brushlessmotor2.writeMicroseconds(brushless2_command);
 	brushlessmotor3.writeMicroseconds(brushless3_command);
 	brushlessmotor4.writeMicroseconds(brushless4_command);
 	lateral1_brushlessmotor.writeMicroseconds(lateral_brushless5_command);
 	lateral2_brushlessmotor.writeMicroseconds(lateral_brushless6_command);
+	lateral1_servo1.writeMicroseconds(lateral1_servo1_command);
+	lateral1_servo2.writeMicroseconds(lateral1_servo2_command);
+	lateral1_servo3.writeMicroseconds(lateral1_servo3_command);
+	lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
+	lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
+	lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
 }
 
 ros::Subscriber<std_msgs::Float32> sub("yaw_command", &yawCallback);
@@ -175,6 +192,12 @@ void setup()
 		brushlessmotor4.writeMicroseconds(1000);
 		lateral1_brushlessmotor.writeMicroseconds(1000);
 		lateral2_brushlessmotor.writeMicroseconds(1000);
+		lateral1_servo1.writeMicroseconds(lateral1_thrust_to_servo_command(0.0));
+		lateral1_servo2.writeMicroseconds(lateral1_thrust_to_servo_command(0.0));
+		lateral1_servo3.writeMicroseconds(lateral1_thrust_to_servo_command(0.0));
+		lateral2_servo1.writeMicroseconds(lateral2_thrust_to_servo_command(0.0));
+		lateral2_servo2.writeMicroseconds(lateral2_thrust_to_servo_command(0.0));
+		lateral2_servo3.writeMicroseconds(lateral2_thrust_to_servo_command(0.0));
 	}
 	//-----------------------------------
 }
