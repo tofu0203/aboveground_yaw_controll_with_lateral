@@ -5,7 +5,7 @@
 #include <Servo.h>
 
 //--------ros設定--------------
-ros::NodeHandle node;
+ros::NodeHandle nh;
 std_msgs::Float32 yaw_sub_value;
 
 //---ブラシレスモーター設定---------
@@ -149,7 +149,7 @@ void yawCallback(const std_msgs::Float32 &command_value)
 	lateral2_servo2_command = lateral2_servo_command;
 	lateral2_servo3_command = lateral2_servo_command;
 
-	// output motor
+	// // output motor
 	brushlessmotor1.writeMicroseconds(brushless1_command);
 	brushlessmotor2.writeMicroseconds(brushless2_command);
 	brushlessmotor3.writeMicroseconds(brushless3_command);
@@ -162,14 +162,16 @@ void yawCallback(const std_msgs::Float32 &command_value)
 	lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
 	lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
 	lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
+	nh.loginfo(String(lateral1_servo1_command).c_str());
 }
 
 ros::Subscriber<std_msgs::Float32> sub("yaw_command", &yawCallback);
 
 void setup()
 {
-	node.initNode();
-	node.subscribe(sub);
+	nh.getHardware()->setBaud(115200);
+	nh.initNode();
+	nh.subscribe(sub);
 	int start_time = millis();
 	//-----------------------------------
 	brushlessmotor1.attach(10);
@@ -184,26 +186,38 @@ void setup()
 	lateral2_servo1.attach(5);
 	lateral2_servo2.attach(6);
 	lateral2_servo3.attach(7);
+	brushless1_command = 1000;
+	brushless1_command = 1000;
+	brushless1_command = 1000;
+	brushless1_command = 1000;
+	lateral_brushless5_command = 1000;
+	lateral_brushless6_command = 1000;
+	lateral1_servo1_command = lateral1_thrust_to_servo_command(0.0);
+	lateral1_servo2_command = lateral1_thrust_to_servo_command(0.0);
+	lateral1_servo3_command = lateral1_thrust_to_servo_command(0.0);
+	lateral2_servo1_command = lateral2_thrust_to_servo_command(0.0);
+	lateral2_servo2_command = lateral2_thrust_to_servo_command(0.0);
+	lateral2_servo3_command = lateral2_thrust_to_servo_command(0.0);
 	while (start_time + 10000 < millis())
 	{
-		brushlessmotor1.writeMicroseconds(1000);
-		brushlessmotor2.writeMicroseconds(1000);
-		brushlessmotor3.writeMicroseconds(1000);
-		brushlessmotor4.writeMicroseconds(1000);
-		lateral1_brushlessmotor.writeMicroseconds(1000);
-		lateral2_brushlessmotor.writeMicroseconds(1000);
-		lateral1_servo1.writeMicroseconds(lateral1_thrust_to_servo_command(0.0));
-		lateral1_servo2.writeMicroseconds(lateral1_thrust_to_servo_command(0.0));
-		lateral1_servo3.writeMicroseconds(lateral1_thrust_to_servo_command(0.0));
-		lateral2_servo1.writeMicroseconds(lateral2_thrust_to_servo_command(0.0));
-		lateral2_servo2.writeMicroseconds(lateral2_thrust_to_servo_command(0.0));
-		lateral2_servo3.writeMicroseconds(lateral2_thrust_to_servo_command(0.0));
+		brushlessmotor1.writeMicroseconds(brushless1_command);
+		brushlessmotor2.writeMicroseconds(brushless2_command);
+		brushlessmotor3.writeMicroseconds(brushless3_command);
+		brushlessmotor4.writeMicroseconds(brushless4_command);
+		lateral1_brushlessmotor.writeMicroseconds(lateral_brushless5_command);
+		lateral2_brushlessmotor.writeMicroseconds(lateral_brushless6_command);
+		lateral1_servo1.writeMicroseconds(lateral1_servo1_command);
+		lateral1_servo2.writeMicroseconds(lateral1_servo2_command);
+		lateral1_servo3.writeMicroseconds(lateral1_servo3_command);
+		lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
+		lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
+		lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
 	}
 	//-----------------------------------
 }
 
 void loop()
 {
-	node.spinOnce();
+	nh.spinOnce();
 	delayMicroseconds(500);
 }
