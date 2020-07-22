@@ -83,7 +83,7 @@ int lateral1_thrust_to_servo_command(float thrust)
 		command = int(lateral1_param3[0] + lateral1_param3[1] * x1 + lateral1_param3[2] * x2 + lateral1_param3[3] * x3);
 	}
 
-	//limmitter
+	//limitter
 	if (command > 1550)
 	{
 		command = 1550;
