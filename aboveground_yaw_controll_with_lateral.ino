@@ -1,12 +1,11 @@
 // rosrun rosserial_arduino serial_node.py _port:=/dev/ttyACM0
 #define USE_USBCON //dueで通信するときに必要
 #include <ros.h>
-#include <std_msgs/Float32.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <Servo.h>
 
 //--------ros設定--------------
 ros::NodeHandle nh;
-std_msgs::Float32 yaw_sub_value;
 
 //---ブラシレスモーター設定---------
 Servo brushlessmotor1;
@@ -24,7 +23,6 @@ Servo lateral2_servo1;
 Servo lateral2_servo2;
 Servo lateral2_servo3;
 
-const float standard_throttle = 1700.0; //機体の自重分のスロットル
 const float lateral_standard_throttle = 1800.0;
 int brushless1_command;
 int brushless2_command;
@@ -41,16 +39,11 @@ int lateral2_servo1_command;
 int lateral2_servo2_command;
 int lateral2_servo3_command;
 
-//サーボのコマンドを1100から1900に制限
+//サーボのコマンドを1900に制限
 int limit_servo_command_value(float value)
 {
 	float limit_max = 1900.0;
-	float limit_min = 1100.0;
-	if (value <= limit_min)
-	{
-		return (int)limit_min;
-	}
-	else if (value >= limit_max)
+	if (value >= limit_max)
 	{
 		return (int)limit_max;
 	}
@@ -132,19 +125,19 @@ int lateral2_thrust_to_servo_command(float thrust)
 
 //コールバック関数
 //自重分のスロットル+yaw制御分にリミットをかけモータに出力
-void yawCallback(const std_msgs::Float32 &command_value)
+void yawCallback(const std_msgs::Float32MultiArray &command_value)
 {
-	brushless1_command = limit_servo_command_value(standard_throttle);
-	brushless2_command = limit_servo_command_value(standard_throttle);
-	brushless3_command = limit_servo_command_value(standard_throttle);
-	brushless4_command = limit_servo_command_value(standard_throttle);
-	lateral_brushless5_command = limit_servo_command_value(lateral_standard_throttle);
-	lateral_brushless6_command = limit_servo_command_value(lateral_standard_throttle);
-	lateral1_servo_command = lateral1_thrust_to_servo_command(command_value.data);
+	brushless1_command = limit_servo_command_value(command_value.data[0]);
+	brushless2_command = limit_servo_command_value(command_value.data[0]);
+	brushless3_command = limit_servo_command_value(command_value.data[0]);
+	brushless4_command = limit_servo_command_value(command_value.data[0]);
+	lateral_brushless5_command = limit_servo_command_value(command_value.data[2]);
+	lateral_brushless6_command = limit_servo_command_value(command_value.data[2]);
+	lateral1_servo_command = lateral1_thrust_to_servo_command(command_value.data[1]);
 	lateral1_servo1_command = 3000 - lateral1_servo_command;
 	lateral1_servo2_command = lateral1_servo_command;
 	lateral1_servo3_command = lateral1_servo_command;
-	lateral2_servo_command = lateral2_thrust_to_servo_command(command_value.data);
+	lateral2_servo_command = lateral2_thrust_to_servo_command(command_value.data[1]);
 	lateral2_servo1_command = 3000 - lateral2_servo_command;
 	lateral2_servo2_command = lateral2_servo_command;
 	lateral2_servo3_command = lateral2_servo_command;
@@ -165,7 +158,7 @@ void yawCallback(const std_msgs::Float32 &command_value)
 	nh.loginfo(String(lateral1_servo1_command).c_str());
 }
 
-ros::Subscriber<std_msgs::Float32> sub("yaw_command", &yawCallback);
+ros::Subscriber<std_msgs::Float32MultiArray> sub("yaw_command", &yawCallback);
 
 void setup()
 {
@@ -186,33 +179,38 @@ void setup()
 	lateral2_servo1.attach(5);
 	lateral2_servo2.attach(6);
 	lateral2_servo3.attach(7);
+
 	brushless1_command = 1000;
 	brushless1_command = 1000;
 	brushless1_command = 1000;
 	brushless1_command = 1000;
+
 	lateral_brushless5_command = 1000;
 	lateral_brushless6_command = 1000;
-	lateral1_servo1_command = lateral1_thrust_to_servo_command(0.0);
-	lateral1_servo2_command = lateral1_thrust_to_servo_command(0.0);
-	lateral1_servo3_command = lateral1_thrust_to_servo_command(0.0);
-	lateral2_servo1_command = lateral2_thrust_to_servo_command(0.0);
-	lateral2_servo2_command = lateral2_thrust_to_servo_command(0.0);
-	lateral2_servo3_command = lateral2_thrust_to_servo_command(0.0);
-	while (start_time + 10000 < millis())
-	{
-		brushlessmotor1.writeMicroseconds(brushless1_command);
-		brushlessmotor2.writeMicroseconds(brushless2_command);
-		brushlessmotor3.writeMicroseconds(brushless3_command);
-		brushlessmotor4.writeMicroseconds(brushless4_command);
-		lateral1_brushlessmotor.writeMicroseconds(lateral_brushless5_command);
-		lateral2_brushlessmotor.writeMicroseconds(lateral_brushless6_command);
-		lateral1_servo1.writeMicroseconds(lateral1_servo1_command);
-		lateral1_servo2.writeMicroseconds(lateral1_servo2_command);
-		lateral1_servo3.writeMicroseconds(lateral1_servo3_command);
-		lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
-		lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
-		lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
-	}
+
+	lateral1_servo_command = lateral1_thrust_to_servo_command(0.0);
+	lateral1_servo1_command = 3000 - lateral1_servo_command;
+	lateral1_servo2_command = lateral1_servo_command;
+	lateral1_servo3_command = lateral1_servo_command;
+
+	lateral2_servo_command = lateral2_thrust_to_servo_command(0.0);
+	lateral2_servo1_command = 3000 - lateral2_servo_command;
+	lateral2_servo2_command = lateral2_servo_command;
+	lateral2_servo3_command = lateral2_servo_command;
+
+	brushlessmotor1.writeMicroseconds(brushless1_command);
+	brushlessmotor2.writeMicroseconds(brushless2_command);
+	brushlessmotor3.writeMicroseconds(brushless3_command);
+	brushlessmotor4.writeMicroseconds(brushless4_command);
+	lateral1_brushlessmotor.writeMicroseconds(lateral_brushless5_command);
+	lateral2_brushlessmotor.writeMicroseconds(lateral_brushless6_command);
+	lateral1_servo1.writeMicroseconds(lateral1_servo1_command);
+	lateral1_servo2.writeMicroseconds(lateral1_servo2_command);
+	lateral1_servo3.writeMicroseconds(lateral1_servo3_command);
+	lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
+	lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
+	lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
+
 	//-----------------------------------
 }
 
