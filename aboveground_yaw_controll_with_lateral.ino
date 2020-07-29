@@ -94,7 +94,6 @@ const float lateral2_param3[4] = {1.31021169e+03, -1.40550417e+01, 6.30551538e-0
 int lateral2_thrust_to_servo_command(float thrust)
 {
 	int command;
-	thrust = -thrust;
 	float x1 = thrust;
 	float x2 = thrust * x1;
 	float x3 = thrust * x2;
@@ -138,7 +137,7 @@ void yawCallback(const std_msgs::Float32MultiArray &command_value)
 	lateral1_servo1_command = 3000 - lateral1_servo_command;
 	lateral1_servo2_command = lateral1_servo_command;
 	lateral1_servo3_command = lateral1_servo_command;
-	lateral2_servo_command = lateral2_thrust_to_servo_command(command_value.data[2]);
+	lateral2_servo_command = lateral2_thrust_to_servo_command(-command_value.data[2]);
 	lateral2_servo1_command = 3000 - lateral2_servo_command;
 	lateral2_servo2_command = lateral2_servo_command;
 	lateral2_servo3_command = lateral2_servo_command;
@@ -156,7 +155,7 @@ void yawCallback(const std_msgs::Float32MultiArray &command_value)
 	lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
 	lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
 	lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
-	nh.loginfo(String(brushless1_command).c_str());
+	nh.loginfo(String(lateral_brushless5_command).c_str());
 }
 
 ros::Subscriber<std_msgs::Float32MultiArray> sub("yaw_command", &yawCallback);
@@ -217,13 +216,30 @@ void setup()
 void loop()
 {
 	if (!nh.connected())
-	{
+	{ //-----------------------------------------------
 		brushlessmotor1.writeMicroseconds(1000);
 		brushlessmotor2.writeMicroseconds(1000);
 		brushlessmotor3.writeMicroseconds(1000);
 		brushlessmotor4.writeMicroseconds(1000);
 		lateral1_brushlessmotor.writeMicroseconds(1000);
 		lateral2_brushlessmotor.writeMicroseconds(1000);
+
+		//------------------------------------------
+		lateral1_servo_command = lateral1_thrust_to_servo_command(0.0);
+		lateral1_servo1_command = 3000 - lateral1_servo_command;
+		lateral1_servo2_command = lateral1_servo_command;
+		lateral1_servo3_command = lateral1_servo_command;
+
+		lateral2_servo_command = lateral2_thrust_to_servo_command(0.0);
+		lateral2_servo1_command = 3000 - lateral2_servo_command;
+		lateral2_servo2_command = lateral2_servo_command;
+		lateral2_servo3_command = lateral2_servo_command;
+		lateral1_servo1.writeMicroseconds(lateral1_servo1_command);
+		lateral1_servo2.writeMicroseconds(lateral1_servo2_command);
+		lateral1_servo3.writeMicroseconds(lateral1_servo3_command);
+		lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
+		lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
+		lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
 	}
 	nh.spinOnce();
 	delayMicroseconds(500);
