@@ -2,10 +2,13 @@
 #define USE_USBCON //dueで通信するときに必要
 #include <ros.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <std_msgs/Int32MultiArray.h>
 #include <Servo.h>
 
 //--------ros設定--------------
 ros::NodeHandle nh;
+std_msgs::Int32MultiArray pub_data;
+ros::Publisher arduino_data("arduino_data", &pub_data);
 
 //---ブラシレスモーター設定---------
 Servo brushlessmotor1;
@@ -23,7 +26,6 @@ Servo lateral2_servo1;
 Servo lateral2_servo2;
 Servo lateral2_servo3;
 
-const float lateral_standard_throttle = 1800.0;
 int brushless1_command;
 int brushless2_command;
 int brushless3_command;
@@ -162,8 +164,10 @@ ros::Subscriber<std_msgs::Float32MultiArray> sub("yaw_command", &yawCallback);
 
 void setup()
 {
-	nh.getHardware()->setBaud(115200);
+	pub_data.data_length = 1;
+	pub_data.data = (int32_t *)malloc(sizeof(int32_t) * 1);
 	nh.initNode();
+	nh.advertise(arduino_data);
 	nh.subscribe(sub);
 	//-----------------------------------
 	brushlessmotor1.attach(10);
@@ -217,12 +221,18 @@ void loop()
 {
 	if (!nh.connected())
 	{ //-----------------------------------------------
-		brushlessmotor1.writeMicroseconds(1000);
-		brushlessmotor2.writeMicroseconds(1000);
-		brushlessmotor3.writeMicroseconds(1000);
-		brushlessmotor4.writeMicroseconds(1000);
-		lateral1_brushlessmotor.writeMicroseconds(1000);
-		lateral2_brushlessmotor.writeMicroseconds(1000);
+		brushless1_command = 1000;
+		brushless2_command = 1000;
+		brushless3_command = 1000;
+		brushless4_command = 1000;
+		lateral_brushless5_command = 1000;
+		lateral_brushless6_command = 1000;
+		brushlessmotor1.writeMicroseconds(brushless1_command);
+		brushlessmotor2.writeMicroseconds(brushless2_command);
+		brushlessmotor3.writeMicroseconds(brushless3_command);
+		brushlessmotor4.writeMicroseconds(brushless4_command);
+		lateral1_brushlessmotor.writeMicroseconds(lateral_brushless5_command);
+		lateral2_brushlessmotor.writeMicroseconds(lateral_brushless5_command);
 
 		//------------------------------------------
 		lateral1_servo_command = lateral1_thrust_to_servo_command(0.0);
@@ -240,6 +250,11 @@ void loop()
 		lateral2_servo1.writeMicroseconds(lateral2_servo1_command);
 		lateral2_servo2.writeMicroseconds(lateral2_servo2_command);
 		lateral2_servo3.writeMicroseconds(lateral2_servo3_command);
+	}
+	else
+	{
+		pub_data.data[0] = analogRead(A0);
+		arduino_data.publish(&pub_data);
 	}
 	nh.spinOnce();
 	delayMicroseconds(500);
